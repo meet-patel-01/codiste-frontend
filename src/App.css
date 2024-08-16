@@ -1,0 +1,46 @@
+.header{
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 10px 20px;
+  background-color: #023cc3a6;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.header .header-body{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 5px 20px;
+}
+
+.header .header-item, .header-item a{
+  color: white;
+  margin: 0px 10px;
+  text-decoration: none;
+}
+
+
+/* user list */
+.user-list{
+  height: 100%;
+  width: 100%;
+  margin: 10px 20px;
+}
+
+.user-list .FAB{
+  position: fixed;
+  right: 10px;
+  bottom: 10px;
+}
+
+.search-box{
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin: 10px 0px;
+}

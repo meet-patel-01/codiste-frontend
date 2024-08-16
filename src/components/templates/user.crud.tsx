@@ -1,4 +1,4 @@
-import { Box, Button, Grid, TextField, Typography } from "@mui/material"
+import { Box, Button, DialogActions, DialogContent, DialogContentText, DialogTitle, Grid, TextField, Typography } from "@mui/material"
 import { UserInterface } from "../../interface/user.interface"
 import * as yup from 'yup'
 import { useFormik } from "formik"
@@ -35,29 +35,43 @@ const editUserValidationSchema = yup.object({
     password: validationSchema.password,
 });
 
-type userEditProps =
-    | { isEdit: true; user: UserInterface }
-    | { isEdit: false; user?: undefined | null };
+const addUserValidationSchema = yup.object({
+    name: validationSchema.name,
+    email: validationSchema.email,
+    mobileNumber: validationSchema.mobileNumber,
+    password: validationSchema.password.required('password is required'),
+});
 
-export const UserEdit = ({ user, isEdit }: userEditProps) => {
+type userEditProps =
+    | { isEdit: true; user: UserInterface; handleClose: (data: any) => void }
+    | { isEdit: false; handleClose: (data: any) => void; user?: undefined | null };
+
+export const UserEdit = ({ user, isEdit, handleClose }: userEditProps) => {
     const dispatch = useDispatch()
 
     const formikForm = useFormik({
         initialValues: {
-            name: (isEdit ? user : initialValue).name,
-            email: (isEdit ? user : initialValue).email,
-            mobileNumber: (isEdit ? user : initialValue).mobileNumber,
+            name: (isEdit ? user : initialValue)?.name,
+            email: (isEdit ? user : initialValue)?.email,
+            mobileNumber: (isEdit ? user : initialValue)?.mobileNumber,
             password: '',
         },
-        validationSchema: editUserValidationSchema,
+        validationSchema: isEdit ? editUserValidationSchema : addUserValidationSchema,
         onSubmit: (values) => {
             if (formikForm.isValid) {
-                axiosInstance.patch(USER_API_URL + user?._id as unknown as string, values).then((response) => {
-                    console.log('>> response', response)
-                });
+                (isEdit
+                    ? axiosInstance.patch(USER_API_URL + user?._id as unknown as string, values)
+                    : axiosInstance.post(USER_API_URL, values)
+                )
+                    .then((response) => {
+                        handleClose(response.data)
+                    }).catch((error) => {
+                    });
             }
         },
     });
+
+    console.log('>> data', isEdit, user)
 
     return <Box sx={{ mt: 4, p: 2 }}>
         <Typography variant="h5" align="center" sx={{ mb: 3 }}>
@@ -111,6 +125,7 @@ export const UserEdit = ({ user, isEdit }: userEditProps) => {
                         label="New Password"
                         name="password"
                         fullWidth
+                        type="password"
                         value={formikForm.values.password}
                         onChange={formikForm.handleChange}
                         onBlur={formikForm.handleBlur}
@@ -128,4 +143,26 @@ export const UserEdit = ({ user, isEdit }: userEditProps) => {
     </Box>
 }
 
-export const UserDelete = () => { }
+export const UserDelete = ({ user, handleClose }: { user: UserInterface, handleClose: (data: any) => void }) => {
+    const handleDelete = () => {
+        axiosInstance.delete(USER_API_URL + user._id).then((response) => handleClose(response.data))
+    }
+    return <>
+        <DialogTitle id="alert-dialog-title">
+            {"Delete User"}
+        </DialogTitle>
+        <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+                Are you sure you want to delete this user? This action cannot be undone.
+            </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+            <Button onClick={() => handleClose(false)} color="info">
+                Cancel
+            </Button>
+            <Button onClick={handleDelete} color="error" autoFocus>
+                Confirm
+            </Button>
+        </DialogActions>
+    </>
+}

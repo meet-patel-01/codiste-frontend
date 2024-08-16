@@ -1,4 +1,4 @@
-import { Box, Button, Dialog, TextField } from '@mui/material';
+import { Box, Button, Dialog, Fab, TextField } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -9,13 +9,14 @@ import { USER_API_URL } from '../../constant';
 import { useDispatch } from 'react-redux';
 import moment from 'moment';
 import { UserInterface } from '../../interface/user.interface';
-import { UserEdit } from './user.crud';
+import { UserDelete, UserEdit } from './user.crud';
 
 export const DataTable = () => {
     const [paginationMeta, setPaginationMeta] = useState<{ pageSize: number, page: number }>({ pageSize: 10, page: 0 });
     const { userList } = useSelector(({ app }: { app: ReduxStateInterface }) => app);
     const [search, setSearch] = useState<string>('');
-    const [action, setAction] = useState<{ show: boolean, selectedUser: UserInterface | null }>({ show: false, selectedUser: null })
+    const [action, setAction] = useState<{ show: boolean, selectedUser: UserInterface | null, isEdit: boolean }>({ show: false, selectedUser: null, isEdit: false })
+    const [deleteAction, setDeleteAction] = useState<{ show: boolean, selectedUser: UserInterface | null }>()
 
     const dispatch = useDispatch();
 
@@ -36,7 +37,6 @@ export const DataTable = () => {
             headerAlign: 'center',
             headerName: 'Last Updated Date',
             renderCell: (value) => {
-                console.log('>> row', value)
                 return <>
                     {moment(value.row.updatedAt).fromNow()}
                 </>
@@ -51,8 +51,8 @@ export const DataTable = () => {
             align: 'center',
             renderCell: (row) => {
                 return <div className='action-cell'>
-                    <Button color='success' onClick={() => setAction({show: true, selectedUser: row.row})}>Edit</Button>
-                    <Button color='error'>Delete</Button>
+                    <Button color='success' onClick={() => setAction({ show: true, selectedUser: row.row, isEdit: true })}>Edit</Button>
+                    <Button color='error' onClick={() => setDeleteAction({ show: true, selectedUser: row.row })}>Delete</Button>
                 </div>
             }
         }
@@ -70,6 +70,19 @@ export const DataTable = () => {
 
     const handleSearch = () => {
         fetchUserList();
+    }
+
+    const handleClose = (data: any) => {
+        console.log(data);
+        setAction({ show: false, selectedUser: null, isEdit: false })
+        fetchUserList();
+    }
+
+    const deleteHandleClose = (data: any) => {
+        setDeleteAction({ show: false, selectedUser: null })
+        if(data){
+            fetchUserList();
+        }
     }
 
     useEffect(() => {
@@ -121,13 +134,30 @@ export const DataTable = () => {
                 />
             </div>
             <div className='dialog'>
-                <Dialog
-                    open={action.show}
-                    onClose={() => setAction({ ...action, show: false })}
-                >
-                    <UserEdit isEdit={true} user={action.selectedUser as unknown as UserInterface} />
-                </Dialog>
+                {
+                    action.show && <Dialog
+                        open={action.show}
+                        onClose={() => setAction({ show: false, selectedUser: null, isEdit: false })}
+                    >
+                        <UserEdit isEdit={action.isEdit} handleClose={handleClose} user={action.selectedUser as unknown as UserInterface} />
+                    </Dialog>
+                }
             </div>
+
+            <div className='dialog'>
+                {
+                    deleteAction?.show && <Dialog
+                        open={deleteAction.show}
+                        onClose={() => setDeleteAction({ show: false, selectedUser: null })}
+                    >
+                        <UserDelete handleClose={deleteHandleClose} user={deleteAction.selectedUser as unknown as UserInterface} />
+                    </Dialog>
+                }
+            </div>
+
+            <Fab variant="extended" color="primary" className="FAB" onClick={() => setAction({ show: true, selectedUser: null, isEdit: false })}>
+                Add New User
+            </Fab>
         </>
     );
 
